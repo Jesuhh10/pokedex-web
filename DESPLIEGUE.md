@@ -1,48 +1,28 @@
-## bitácora de Despliegue - Pueblo Paleta Inc.##
+# Guía de Despliegue Técnico - PokeDex
 
-Este documento detalla el proceso técnico, los comandos ejecutados y la resolución de conflictos para el despliegue de la aplicación PokeDex en Azure Static Web Apps.
+Este documento detalla los comandos, retos técnicos y configuraciones específicas implementadas para el despliegue exitoso de la aplicación en Azure.
 
-1. Preparación del Entorno Local
-Para garantizar un despliegue limpio, se realizó una migración de los archivos fuente desde el repositorio base a un nuevo repositorio local optimizado.
+## 1. Gestión de Versiones y Trazabilidad (Git)
 
-Inicialización del repositorio:
-    en bash:     git init
-    git branch -M main
-Limpieza de estructura: Se movieron los archivos desde la subcarpeta técnica source/pokedex-angular directamente a la raíz del proyecto para facilitar la detección de Azure.
+El historial de versiones refleja un progreso lógico de 11 ejecuciones de flujo de trabajo (Workflow Runs), donde se gestionaron los siguientes hitos técnicos:
 
-2. Configuración de CI/CD (GitHub a Azure)
-El despliegue se automatizó mediante GitHub Actions. La configuración en el portal de Azure se definió de la siguiente manera:
+* **Estandarización de Ramas:** Se utilizó `git branch -M main` para alinear el repositorio local con el estándar de producción de GitHub y Azure.
+* **Sincronización mediante Rebase:** Para integrar los archivos de configuración generados automáticamente por Azure sin generar commits de unión innecesarios, se aplicó `git pull origin main --rebase`.
+* **Resolución de Conflictos:** Se presentó un "Merge Conflict" en el archivo `README.md` debido a cambios simultáneos en la nube y el entorno local. Se resolvió manualmente integrando ambas fuentes de información.
+* **Control de Errores:** Se gestionaron errores de tipo `rejected (fetch first)` asegurando que la historia del repositorio estuviera siempre sincronizada antes de cada push.
 
-App Location: / (Raíz del proyecto).
+## 2. Implementación de Seguridad (Security Headers)
 
-Output Location: / (Archivos estáticos procesados).
+Para obtener la calificación **A** en el escaneo de seguridad, se configuró el archivo `staticwebapp.config.json` con los siguientes encabezados:
 
-Workflow: Se generó un archivo .yml en la carpeta .github/workflows que se dispara automáticamente con cada push a la rama main.
+* **Strict-Transport-Security (HSTS):** Configurado con un `max-age` de un año para forzar conexiones seguras.
+* **Content-Security-Policy (CSP):** Implementado para prevenir ataques de inyección de scripts (XSS).
+* **X-Frame-Options (DENY):** Configurado para mitigar ataques de Clickjacking.
+* **Permissions-Policy:** Se deshabilitaron sensores del dispositivo (cámara, micrófono) para reducir la superficie de ataque.
 
-3. Comandos de Gestión de Cambios
-Durante el desarrollo y documentación, se utilizaron los siguientes comandos de Git:
+## 3. Infraestructura y CI/CD (Azure)
 
-    en bash:
-    Bash
-    git add .
-    git commit -m "Mensaje descriptivo del cambio"
-    git push origin main
+La aplicación utiliza el modelo de **Azure Static Web Apps**. La automatización se gestiona mediante **GitHub Actions**, donde cada commit dispara una compilación automática de Angular y el despliegue inmediato al entorno de producción global.
 
-4. Errores Encontrados y Soluciones
+link pokedex publica: https://lively-island-09b4f7010.7.azurestaticapps.net
 
-
-1 error: Permission denied (publickey) 
-    causa: Intento de conexión vía SSH sin llaves configuradas. 
-    solucion: Se cambió el origen del remoto a HTTPS con git remote set-url.
-
-2 error: rejected - fetch first 
-    causa: Desincronización entre el repositorio local y los archivos generados por Azure en la nube.
-    solucion: Se ejecutó un git pull origin main --rebase para unificar las versiones.
-
-3 error: No such file or directory
-    causa: Error en la referencia de rutas relativas debido a la profundidad de carpetas.
-    swolucion:Uso de rutas absolutas y comandos de navegación cd paso a paso.
-
-5. Verificación Final
-El proyecto se encuentra operativo en la siguiente URL de producción:
-[https://lively-island-09b4f7010.7.azurestaticapps.net/]
